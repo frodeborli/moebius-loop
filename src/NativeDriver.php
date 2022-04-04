@@ -87,7 +87,24 @@ class NativeDriver implements LoopInterface {
      * @return callable Cancel function
      */
     public static function setTimeout(callable $callback, float $timeout): callable {
-        return self::get()->setTimeout($callback, $timeout);
+        if ($timeout <= 0) {
+            throw new \Exception("Timeout must be greater than 0");
+        }
+        $cancelled = false;
+        $timeout += microtime(true);
+        $this->defer($ticker = function() use ($callback, &$cancelled, &$ticker, $timeout) {
+            if ($cancelled) {
+                return;
+            }
+            if ($timeout < microtime(true)) {
+                $callback();
+            } else {
+                $this->defer($ticker);
+            }
+        });
+        return function() use (&$cancelled) {
+            $cancelled = true;
+        };
     }
 
     /**
@@ -99,7 +116,24 @@ class NativeDriver implements LoopInterface {
      * @return callable Cancel function
      */
     public static function setInterval(callable $callback, float $interval): callable {
-        return self::get()->setInterval($callback, $interval);
+        if ($interval <= 0) {
+            throw new \Exception("Interval must be greater than 0");
+        }
+        $cancelled = false;
+        $timeout = microtime(true) + $interval;
+        $this->defer($ticker = function() use ($callback, $interval, &$cancelled, &$ticker, &$timeout) {
+            if ($cancelled) {
+                return;
+            }
+            if ($timeout < microtime(true)) {
+                $timeout += $interval;
+                $callback();
+            }
+            $this->defer($ticker);
+        });
+        return function() use (&$cancelled) {
+            $cancelled = true;
+        };
     }
 
     /**
