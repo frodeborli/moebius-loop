@@ -396,7 +396,7 @@ class NativeDriver implements LoopInterface {
      *
      * @type SplObjectStorage<resource, array<callable>>
      */
-    private array $readableStreamListeners;
+    private array $readableStreamListeners = [];
 
     /**
      * Map of streams to callbacks that needs notification when the stream
@@ -404,7 +404,7 @@ class NativeDriver implements LoopInterface {
      *
      * @type SplObjectStorage<resource, array<callable>>
      */
-    private array $writableStreamListeners;
+    private array $writableStreamListeners = [];
 
     /**
      * Map of signals number to arrays of callbacks which will be invoked when
