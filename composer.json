@@ -1,0 +1,28 @@
+{
+    "name": "moebius/loop",
+    "description": "An event-loop compatability layer for creating packages that work with other event loop implementations such as ReactPHP or Amphp.",
+    "type": "library",
+    "require": {
+        "php": ">=8.0"
+    },
+    "suggest": {
+        "ext-pcntl": "For signal handling support"
+    },
+    "require-dev": {
+        "charm/testing": "^0.0.3"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Moebius\\Loop\\": "src/"
+        },
+        "classmap": ["Loop.php", "LoopInterface.php"]
+    },
+    "authors": [
+        {
+            "name": "Frode Børli",
+            "email": "frode@ennerd.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
