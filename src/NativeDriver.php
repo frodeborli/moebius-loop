@@ -57,8 +57,8 @@ class NativeDriver implements LoopInterface {
         $this->draining = true;
         try {
             do {
-                $this->tick();
-            } while (!$doneCallback());
+                $count = $this->tick();
+            } while (!$doneCallback() && $count > 0);
             $this->draining = false;
         } catch (\Throwable $e) {
             $this->draining = false;
@@ -76,6 +76,30 @@ class NativeDriver implements LoopInterface {
      */
     public function defer(callable $callback): void {
         $this->queue[$this->queueHigh++] = Closure::fromCallable($callback);
+    }
+
+    /**
+     * Schedule a callback to run at a later time. Returns a function
+     * which can be invoked to prevent the callback.
+     *
+     * @param callable $callback Function to run on timeout
+     * @param float $delay Number of seconds to delay execution
+     * @return callable Cancel function
+     */
+    public static function setTimeout(callable $callback, float $timeout): callable {
+        return self::get()->setTimeout($callback, $timeout);
+    }
+
+    /**
+     * Schedule a callback to run at regular intervals. Returns a function
+     * which can be invoked to cancel the interval.
+     *
+     * @param callable $callback Function to run on timeout
+     * @param float $interval Delay between each execution
+     * @return callable Cancel function
+     */
+    public static function setInterval(callable $callback, float $interval): callable {
+        return self::get()->setInterval($callback, $interval);
     }
 
     /**

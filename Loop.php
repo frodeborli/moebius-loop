@@ -12,7 +12,9 @@ final class Loop {
     private static ?LoopInterface $instance = null;
 
     /**
-     * Runs the event loop until the $doneCallback returns true.
+     * Runs the event loop until the $doneCallback returns true
+     * or the event loop is empty.
+     *
      * This function is required to run coroutines, but might
      * not be supported by every third-party loop implementation.
      *
