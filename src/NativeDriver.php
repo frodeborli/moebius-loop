@@ -86,7 +86,7 @@ class NativeDriver implements LoopInterface {
      * @param float $delay Number of seconds to delay execution
      * @return callable Cancel function
      */
-    public static function setTimeout(callable $callback, float $timeout): callable {
+    public function setTimeout(callable $callback, float $timeout): callable {
         if ($timeout <= 0) {
             throw new \Exception("Timeout must be greater than 0");
         }
@@ -115,7 +115,7 @@ class NativeDriver implements LoopInterface {
      * @param float $interval Delay between each execution
      * @return callable Cancel function
      */
-    public static function setInterval(callable $callback, float $interval): callable {
+    public function setInterval(callable $callback, float $interval): callable {
         if ($interval <= 0) {
             throw new \Exception("Interval must be greater than 0");
         }
