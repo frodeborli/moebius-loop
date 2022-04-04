@@ -113,6 +113,10 @@ final class Loop {
         return self::$instance;
     }
 
+    public static function logException(\Throwable $e): void {
+        fwrite(STDERR, gmdate('Y-m-d H:i:s')." ".$e->getMessage()." in ".$e->getFile().":".$e->getLine()."\n".$e->getTraceAsString()."\n");
+    }
+
     /**
      * Discover any alternative event loop implementations we can run
      */

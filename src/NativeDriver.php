@@ -1,6 +1,7 @@
 <?php
 namespace Moebius\Loop;
 
+use Moebius\Loop;
 use Moebius\LoopInterface;
 use Closure;
 use Fiber;
@@ -155,7 +156,7 @@ class NativeDriver implements LoopInterface {
             try {
                 $callback();
             } catch (\Throwable $e) {
-                $this->logException($e);
+                Loop::logException($e);
             }
         }
         $tickTime = (1000000 * (microtime(true) - $startTime)) | 0;
@@ -189,7 +190,7 @@ class NativeDriver implements LoopInterface {
             try {
                 $handler($signo, $siginfo);
             } catch (\Throwable $error) {
-                $this->logException($error);
+                Loop::logException($error);
             }
         }
     }
