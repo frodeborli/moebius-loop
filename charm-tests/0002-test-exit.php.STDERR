@@ -1,0 +1,2 @@
+2022-04-04 21:15:17 error Exception: Exception should stop event loop (code=0 file=/root/Moebius/moebius-loop/charm-tests/0002-test-exit.php line=12)
+2022-04-04 21:15:17 fatal Shutting down due to unhandled exception

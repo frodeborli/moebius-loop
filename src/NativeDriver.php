@@ -21,6 +21,19 @@ class NativeDriver implements LoopInterface {
         register_shutdown_function($this->shutdownHandler(...));
     }
 
+    public function terminate(): void {
+        $this->terminated = true;
+        foreach ($this->signalHandlers as $signo => $void) {
+            pcntl_signal($signo, SIG_DFL);
+        }
+    }
+
+    /**
+     * Once this is true, the program is terminating. No further
+     * ticks will be executed.
+     */
+    private bool $terminated = false;
+
     /**
      * All callbacks scheduled to run
      */
@@ -56,15 +69,10 @@ class NativeDriver implements LoopInterface {
             throw new \Exception("Loop is already draining, so you should not be trying to drain it... Fix your code!");
         }
         $this->draining = true;
-        try {
-            do {
-                $count = $this->tick();
-            } while (!$doneCallback() && $count > 0);
-            $this->draining = false;
-        } catch (\Throwable $e) {
-            $this->draining = false;
-            throw $e;
-        }
+        do {
+            $count = $this->tick();
+        } while (!$doneCallback() && $count > 0);
+        $this->draining = false;
     }
 
     public function isDraining(): bool {
@@ -145,10 +153,15 @@ class NativeDriver implements LoopInterface {
             throw new \Exception("Tick invoked from inside a fiber");
         }
 
+        if ($this->terminated) {
+            return 0;
+        }
+
         $counter = 0;
         $stopIndex = $this->queueHigh;
 
         $startTime = microtime(true);
+        $didStreamSelect = $this->isStreamSelectScheduled;
         while ($this->queueLow < $stopIndex) {
             $callback = $this->queue[$this->queueLow];
             unset($this->queue[$this->queueLow++]);
@@ -157,9 +170,17 @@ class NativeDriver implements LoopInterface {
                 $callback();
             } catch (\Throwable $e) {
                 Loop::logException($e);
+                Loop::log('fatal', 'Shutting down due to unhandled exception in tick function');
+                $this->terminate();
             }
         }
-        $tickTime = (1000000 * (microtime(true) - $startTime)) | 0;
+        if (!$didStreamSelect) {
+            $tickTime = intval(1000000 * (microtime(true) - $startTime));
+            if ($tickTime < 1000) {
+                $sleepTime = 1000 - $tickTime;
+                usleep($sleepTime);
+            }
+        }
         return $counter;
     }
 
@@ -167,6 +188,19 @@ class NativeDriver implements LoopInterface {
      * Function is invoked when all standard PHP code has finished running.
      */
     private function shutdownHandler(): void {
+        /**
+         * This shutdown logic is borrowed from the ReactPHP event loop implementation
+         */
+        $error = error_get_last();
+        if ((isset($error['type']) ? $error['type'] : 0) & (E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR)) {
+            var_dump($error);
+            return;
+        }
+
+        if ($this->terminated) {
+            return;
+        }
+
         // The event loop self activates on shutdown
         $this->draining = true;
 
@@ -191,6 +225,8 @@ class NativeDriver implements LoopInterface {
                 $handler($signo, $siginfo);
             } catch (\Throwable $error) {
                 Loop::logException($error);
+                Loop::log('fatal', 'Shutting down due to unhandled exception in signal handler function');
+                $this->terminate();
             }
         }
     }
@@ -411,5 +447,4 @@ class NativeDriver implements LoopInterface {
      * the process receives a signal.
      */
     private array $signalHandlers = [];
-
 }

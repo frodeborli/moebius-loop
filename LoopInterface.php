@@ -6,6 +6,14 @@ namespace Moebius;
  * with an efficient event loop.
  */
 interface LoopInterface {
+
+    /**
+     * Stop the event loop. This is generally called because of an error
+     * condition. The application should ideally stop by removing all
+     * event listeners, timers and stream watchers.
+     */
+    public function terminate(): void;
+
     /**
      * Runs the event loop until the $doneCallback returns true.
      * This function is required to run coroutines, but might

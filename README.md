@@ -1,26 +1,56 @@
 moebius/loop
 ============
 
-A unified event loop API which works with React and Amp event loops. If neither
-of the event loops are installed, a native event loop implementation will be used.
+A powerful and simple event loop implementation which works on top of either
+`react/event-loop` or `amphp/amp`. If neither of those event loop implementations,
+are installed in your project, the built in event-loop will be used.
 
-Other event loop implementations
---------------------------------
+The purpose of this package is to enable `moebius/coroutine` to be used in any
+existing async project.
 
-This event loop implementation will automatically use other popular event loop
-implementations if it detects that they are installed. It will check for
-implementations in this order:
+In other words, the goal is to enable writing your code in a truly sequential
+style:
 
- 1. react/event-loop
- 2. amphp/amp
+```
+$server = new HttpServer(function (ServerRequestInterface $request) {
 
-If no implementations are found, it will use a built-in event loop implementation.
+    sleep(20); // YES, this is non-blocking code(!)
+    return Response::plaintext("Hello World!\n");
 
-Compatability bridges
----------------------
+});
+```
 
-If you want to run amphp and ReactPHP libraries, you can install event loop compatability
-layers:
+
+Use case
+--------
+
+If you are building components that need an event loop, you can use `moebius/loop`
+as a translation layer, and your component will happily run in either environment.
+
+
+Drivers
+-------
+
+If you have any of the supported event-loop implementations installed in your project,
+`moebius/loop` will automatically use those implementations.
+
+Currently we have implemented drivers for:
+
+ * `react/event-loop`
+ * `amphp/amp`
+
+If none of these event loop implementations are installed, the native event loop
+based on `stream_select()` will be used.
+
+
+Virtualization bridges
+----------------------
+
+While you can easily use an existing event loop driver, it is also possible to
+add a compatability layer on top of `moebius/loop`.
+
+This effectively means that you can run async components from Amp or React in the
+same project by installing a "loop bridge" component.
 
  * `composer require moebius/loop-reactbridge` will allow ReactPHP libraries to run
    on the moebius/loop.

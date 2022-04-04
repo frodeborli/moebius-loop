@@ -108,13 +108,10 @@ final class Loop {
     private static function get(): LoopInterface {
         if (self::$instance === null) {
             self::discoverEventLoopImplementation();
+            self::bootstrap();
         }
 
         return self::$instance;
-    }
-
-    public static function logException(\Throwable $e): void {
-        fwrite(STDERR, gmdate('Y-m-d H:i:s')." ".$e->getMessage()." in ".$e->getFile().":".$e->getLine()."\n".$e->getTraceAsString()."\n");
     }
 
     /**
@@ -130,4 +127,29 @@ final class Loop {
         }
     }
 
+    private static function bootstrap(): void {
+        set_error_handler(function(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine): void {
+            self::logError($errorNumber, $errorString, $errorFile, $errorLine);
+            self::log('fatal', 'Shutting down due to unhandled error');
+            self::get()->terminate();
+        });
+
+        set_exception_handler(function(\Throwable $e) {
+            self::logException($e);
+            Loop::log('fatal', 'Shutting down due to unhandled exception');
+            self::get()->terminate();
+        });
+    }
+
+    public static function logException(\Throwable $e): void {
+        self::logError($e->getCode(), get_class($e).": ".$e->getMessage(), $e->getFile(), $e->getLine());
+    }
+
+    public static function logError(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine): void {
+        self::log('error', $errorString." (code=$errorNumber file=$errorFile line=$errorLine)");
+    }
+
+    public static function log(string $severity, string $message): void {
+        fwrite(STDERR, date('Y-m-d H:i:s').' '.$severity.' '.$message."\n");
+    }
 }

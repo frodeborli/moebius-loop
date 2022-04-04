@@ -9,7 +9,7 @@
         "ext-pcntl": "For signal handling support"
     },
     "require-dev": {
-        "charm/testing": "^0.0.3"
+        "charm/testing": "dev-master"
     },
     "license": "MIT",
     "autoload": {

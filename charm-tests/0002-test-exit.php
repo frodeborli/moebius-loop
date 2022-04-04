@@ -7,19 +7,21 @@ Moebius\Loop::defer(function() {
 
 $c2 = Moebius\Loop::setTimeout(function() {
     echo "2 second later should not happen\n";
-}, 0.2);
+}, 0.1);
+
+throw new Exception("Exception should stop event loop");
 
 Moebius\Loop::setTimeout(function() use ($c2) {
     echo "1 second later\n";
     $c2();
-}, 0.1);
+}, 1);
 
 $c3 = Moebius\Loop::setInterval(function() {
     echo "Every 0.5 second\n";
-}, 0.05);
+}, 0.5);
 
 Moebius\Loop::setTimeout(function() use ($c3) {
     $c3();
-}, 0.25);
+}, 2.5);
 
 echo "Final function\n";

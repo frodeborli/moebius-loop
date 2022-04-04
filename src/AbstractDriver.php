@@ -17,6 +17,7 @@ abstract class AbstractDriver implements LoopInterface {
     abstract protected function _addReadListener($stream, callable $listener): callable;
     abstract protected function _addWriteListener($stream, callable $listener): callable;
     abstract protected function _addSignalListener(int $signal, callable $listener): callable;
+    abstract protected function terminate(int $exitCode): void;
 
     public function __construct() {
         $this->subscribers = new WeakMap();

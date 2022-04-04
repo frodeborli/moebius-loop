@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c81992dc7f56c8353ccaa6e0781357b3",
+    "content-hash": "e2f711e7fb3e1572faf9f1cd46d3d477",
     "packages": [],
     "packages-dev": [
         {
@@ -96,22 +96,23 @@
         },
         {
             "name": "charm/testing",
-            "version": "0.0.3",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/ennerd/charm-testing.git",
-                "reference": "cef2a3a96eb1ab80e357ae9a9e84b85793efa9df"
+                "reference": "f434b69218f2a9d5d528abac93021cfe3f92882f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://bitbucket.org/ennerd/charm-testing/get/cef2a3a96eb1ab80e357ae9a9e84b85793efa9df.zip",
-                "reference": "cef2a3a96eb1ab80e357ae9a9e84b85793efa9df",
+                "url": "https://bitbucket.org/ennerd/charm-testing/get/f434b69218f2a9d5d528abac93021cfe3f92882f.zip",
+                "reference": "f434b69218f2a9d5d528abac93021cfe3f92882f",
                 "shasum": ""
             },
             "require": {
                 "charm/terminal": "^1.0",
                 "charm/util-phpencode": "^1.0"
             },
+            "default-branch": true,
             "bin": [
                 "bin/charm-testing"
             ],
@@ -134,9 +135,9 @@
             "description": "A tool for running regression and unit testing with very little scaffolding.",
             "homepage": "https://bitbucket.org/ennerd/charm-testing",
             "support": {
-                "source": "https://bitbucket.org/ennerd/charm-testing/src/cef2a3a96eb1ab80e357ae9a9e84b85793efa9df/?at=0.0.3"
+                "source": "https://bitbucket.org/ennerd/charm-testing/src/f434b69218f2a9d5d528abac93021cfe3f92882f/?at=0.0.7"
             },
-            "time": "2022-04-01T10:54:45+00:00"
+            "time": "2022-04-04T21:36:27+00:00"
         },
         {
             "name": "charm/util-phpencode",
@@ -178,7 +179,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "charm/testing": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

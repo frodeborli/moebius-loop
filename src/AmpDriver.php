@@ -12,6 +12,10 @@ class AmpDriver extends AbstractDriver {
         register_shutdown_function(Loop::run(...));
     }
 
+    public function terminate(): void {
+        Loop::stop();
+    }
+
     public function defer(callable $microtask): void {
         Loop::defer($microtask);
     }
