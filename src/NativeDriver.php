@@ -18,21 +18,26 @@ class NativeDriver implements LoopInterface {
 
     public function __construct() {
         pcntl_async_signals(true);
-        register_shutdown_function($this->shutdownHandler(...));
+        //register_shutdown_function($this->shutdownHandler(...));
     }
 
+    /**
+     * Stop the event loop. This is generally called because of an error
+     * condition. The application should ideally stop by removing all
+     * event listeners, timers and stream watchers.
+     */
     public function terminate(): void {
-        $this->terminated = true;
+        $this->terminating = true;
         foreach ($this->signalHandlers as $signo => $void) {
             pcntl_signal($signo, SIG_DFL);
         }
     }
 
     /**
-     * Once this is true, the program is terminating. No further
-     * ticks will be executed.
+     * Once this is true, the program is in the process of terminating.
+     * No further ticks will be executed.
      */
-    private bool $terminated = false;
+    private bool $terminating = false;
 
     /**
      * All callbacks scheduled to run
@@ -72,6 +77,15 @@ class NativeDriver implements LoopInterface {
         do {
             $count = $this->tick();
         } while (!$doneCallback() && $count > 0);
+        $this->draining = false;
+    }
+
+    /**
+     * Run event loop until empty
+     */
+    public function run(): void {
+        $this->draining = true;
+        while ($this->tick() > 0);
         $this->draining = false;
     }
 
@@ -153,7 +167,7 @@ class NativeDriver implements LoopInterface {
             throw new \Exception("Tick invoked from inside a fiber");
         }
 
-        if ($this->terminated) {
+        if ($this->terminating) {
             return 0;
         }
 
@@ -197,7 +211,7 @@ class NativeDriver implements LoopInterface {
             return;
         }
 
-        if ($this->terminated) {
+        if ($this->terminating) {
             return;
         }
 

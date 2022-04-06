@@ -18,6 +18,7 @@ abstract class AbstractDriver implements LoopInterface {
     abstract protected function _addWriteListener($stream, callable $listener): callable;
     abstract protected function _addSignalListener(int $signal, callable $listener): callable;
     abstract protected function terminate(int $exitCode): void;
+    abstract protected function _run(): void;
 
     public function __construct() {
         $this->subscribers = new WeakMap();
@@ -42,6 +43,12 @@ abstract class AbstractDriver implements LoopInterface {
 
     public function isDraining(): bool {
         return $this->draining;
+    }
+
+    public function run(): void {
+        $this->draining = true;
+        $this->_run();
+        $this->draining = false;
     }
 
     public function setTimeout(callable $callback, float $delay): callable {

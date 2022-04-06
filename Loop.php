@@ -3,13 +3,55 @@ namespace Moebius;
 
 use React\EventLoop\Loop as React;
 use Amp\Loop as Amp;
+use Moebius\Loop\ShutdownDetectedException;
+use Moebius\Loop\InvalidTerminationException;
 
 /**
  * Provides access to an underlying event loop implementation from React,
  * Amphp or a native event loop if no other implementation is found.
  */
 final class Loop {
+
+    /**
+     * State when we're simply running the events during normal program
+     * execution (before any fatal errors or exit() or die() being called)
+     */
+    const STATE_LAUNCHING = 'launching';
+
+    /**
+     * State when the event loop runs normally until there are no more
+     * event listeners.
+     */
+    const STATE_FINISHING = 'finishing';
+
+    /**
+     * State when the event loop has finished
+     */
+    const STATE_FAILED = 'failed';
+
+    /**
+     * State when the event loop finishes normally
+     */
+    const STATE_DONE = 'done';
+
+    /**
+     * See {self::STATE_?}
+     */
+    private static string $state = self::STATE_LAUNCHING;
+
+    /**
+     * If an unhandled error occurred, it will be recorded here
+     */
+    private static ?\Throwable $fatalException = null;
+
     private static ?LoopInterface $instance = null;
+
+    /**
+     * If NULL, we're not shutting down. If true, we've detected a normal
+     * shutdown and the event loop will begin draining. If false, we detected
+     * an exit() or die() being called prematurely.
+     */
+    private static ?bool $normalShutdown = null;
 
     /**
      * Runs the event loop until the $doneCallback returns true
@@ -107,8 +149,8 @@ final class Loop {
      */
     private static function get(): LoopInterface {
         if (self::$instance === null) {
-            self::discoverEventLoopImplementation();
             self::bootstrap();
+            self::discoverEventLoopImplementation();
         }
 
         return self::$instance;
@@ -129,24 +171,58 @@ final class Loop {
 
     private static function bootstrap(): void {
         set_error_handler(function(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine): void {
-            self::logError($errorNumber, $errorString, $errorFile, $errorLine);
-            self::log('fatal', 'Shutting down due to unhandled error');
-            self::get()->terminate();
+            throw new \ErrorException($errorString, $errorNumber, E_ERROR, $errorFile, $errorLine);
         });
 
         set_exception_handler(function(\Throwable $e) {
             self::logException($e);
-            Loop::log('fatal', 'Shutting down due to unhandled exception');
-            self::get()->terminate();
+            self::$fatalException = $e;
+        });
+
+        register_shutdown_function(self::shutdownHandler(...));
+    }
+
+    private static function shutdownHandler() {
+        if (self::$state === self::STATE_LAUNCHING) {
+            /**
+             * This may have been a fatal error condition, or it is simply
+             * a normal scenario.
+             */
+            if (self::$fatalException !== null) {
+                Loop::log('fatal', 'Shutting down due to unhandled '.get_class(self::$fatalException));
+                self::$state = self::STATE_FAILED;
+            } elseif (self::isDraining()) {
+                Loop::log('fatal', 'Shutting down because die() or exit() was called inside event loop');
+                self::$fatalException = new InvalidTerminationException();
+                self::$state = self::STATE_FAILED;
+            } else {
+                // everything seems fine, proceed
+                self::$state = self::STATE_FINISHING;
+                try {
+                    self::get()->run();
+                    self::$state = self::STATE_DONE;
+                } catch (\Throwable $e) {
+                    self::logException($e);
+                } finally {
+                    if (self::$state !== self::STATE_DONE) {
+                        self::$state = self::STATE_FAILED;
+                    }
+                }
+            }
+        } else {
+            die("shutdown handler in state ".self::$state."\n");
+        }
+    }
+
+    private static function runShutdownTicks() {
+        register_shutdown_function(self::shutdownHandler(...)); //shutdownHandler(...));
+        self::drain(function() {
+            return true;
         });
     }
 
     public static function logException(\Throwable $e): void {
-        self::logError($e->getCode(), get_class($e).": ".$e->getMessage(), $e->getFile(), $e->getLine());
-    }
-
-    public static function logError(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine): void {
-        self::log('error', $errorString." (code=$errorNumber file=$errorFile line=$errorLine)");
+        self::log('error', get_class($e).' code='.$e->getCode().' '.$e->getMessage());
     }
 
     public static function log(string $severity, string $message): void {

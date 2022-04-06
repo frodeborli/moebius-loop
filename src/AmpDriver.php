@@ -31,6 +31,10 @@ class AmpDriver extends AbstractDriver {
         Loop::run();
     }
 
+    protected function _run(): void {
+        Loop::run();
+    }
+
     protected function _addReadListener($stream, callable $listener): callable {
         $id = Loop::onReadable($stream, $listener);
         return function() use ($id) {

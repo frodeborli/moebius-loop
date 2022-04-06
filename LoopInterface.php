@@ -24,6 +24,11 @@ interface LoopInterface {
     public function drain(callable $doneCallback): void;
 
     /**
+     * Runs the event loop until it has nothing more to do.
+     */
+    public function run(): void;
+
+    /**
      * Is the loop currently draining?
      */
     public function isDraining(): bool;

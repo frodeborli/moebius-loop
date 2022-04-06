@@ -16,6 +16,10 @@ class ReactDriver extends AbstractDriver {
         Loop::futureTick($microtask);
     }
 
+    protected function _run(): void {
+        Loop::run();
+    }
+
     protected function _drain(callable $doneCallback): void {
         Loop::futureTick($stopper = function() use ($doneCallback, &$stopper) {
             if ($doneCallback()) {
