@@ -171,6 +171,9 @@ final class Loop {
 
     private static function bootstrap(): void {
         set_error_handler(function(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine): void {
+            if (!(error_reporting() & $errorNumber)) {
+                return false;
+            }
             throw new \ErrorException($errorString, $errorNumber, E_ERROR, $errorFile, $errorLine);
         });
 
