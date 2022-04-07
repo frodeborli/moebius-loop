@@ -170,7 +170,7 @@ final class Loop {
     }
 
     private static function bootstrap(): void {
-        set_error_handler(function(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine): void {
+        set_error_handler(function(int $errorNumber, string $errorString, string $errorFile=null, int $errorLine) {
             if (!(error_reporting() & $errorNumber)) {
                 return false;
             }
