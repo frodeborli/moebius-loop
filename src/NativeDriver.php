@@ -16,8 +16,15 @@ use function register_shutdown_function, get_resource_id;
  */
 class NativeDriver implements LoopInterface {
 
+    public bool $debug = false;
+    private int $tickCount = 0;
+
     public function __construct() {
         pcntl_async_signals(true);
+        if (getenv('DEBUG')) {
+            $this->debug = true;
+        }
+
         //register_shutdown_function($this->shutdownHandler(...));
     }
 
@@ -72,6 +79,10 @@ class NativeDriver implements LoopInterface {
     public function drain(callable $doneCallback): void {
         if ($this->isDraining()) {
             throw new \Exception("Loop is already draining, so you should not be trying to drain it... Fix your code!");
+        }
+        $total = count($this->readableStreamListeners) + count($this->writableStreamListeners) + ($this->queueHigh - $this->queueLow);
+        if ($total === 0) {
+            throw new \Exception("Trying to drain empty event loop");
         }
         $this->draining = true;
         do {
@@ -167,6 +178,12 @@ class NativeDriver implements LoopInterface {
             throw new \Exception("Tick invoked from inside a fiber");
         }
 
+        $this->tickCount++;
+
+        if ($this->debug) {
+            echo "\rmoebius/loop: #".$this->tickCount." queue=".($this->queueHigh-$this->queueLow)." readers=".count($this->readableStreamListeners)." writers=".count($this->writableStreamListeners)." terminating=".($this->terminating?1:0)."\n";
+        }
+
         if ($this->terminating) {
             return 0;
         }
@@ -216,14 +233,17 @@ class NativeDriver implements LoopInterface {
         }
 
         // The event loop self activates on shutdown
+/*
         $this->draining = true;
 
         $count = $this->tick();
         if ($count > 0) {
+echo "register_shutdown 1\n";
             register_shutdown_function($this->shutdownHandler(...));
         } else {
             $this->draining = false;
         }
+*/
     }
 
     /**
@@ -378,28 +398,37 @@ class NativeDriver implements LoopInterface {
         }
         $this->isStreamSelectScheduled = false;
 
+        // holds any file descriptors with id < 1024
+        $readStreams = [];
+        $writeStreams = [];
         $exceptStreams = [];
 
-        $readStreams = [];
+        // total count of streams we're doing select on
+        $count = 0;
+
         foreach ($this->readableStreamListeners as $streamId => $info) {
             if (!is_resource($info[0])) {
                 unset($this->readableStreamListeners[$streamId]);
                 continue;
             }
+
+            $count++;
             $readStreams[] = $info[0];
+            $exceptStreams[] = $info[0];
         }
 
-        $writeStreams = [];
         foreach ($this->writableStreamListeners as $streamId => $info) {
             if (!is_resource($info[0])) {
                 unset($this->writableStreamListeners[$streamId]);
                 continue;
             }
+            $count++;
             $writeStreams[] = $info[0];
+            $exceptStreams[] = $info[0];
         }
 
-        if (count($writeStreams) === 0 && count($readStreams) === 0 && count($exceptStreams) === 0) {
-            // we have no streams to monitor
+        if ($count === 0) {
+            // there are no streams to monitor
             return;
         }
 
@@ -415,7 +444,57 @@ class NativeDriver implements LoopInterface {
             // have enough to do, so sleep minimally
             $sleepTime = 0;
         }
-        $matches = stream_select($readStreams, $writeStreams, $exceptStreams, 0, $sleepTime);
+
+        try {
+            $oReadStreams = $readStreams;
+            $oWriteStreams = $writeStreams;
+            $matches = stream_select($readStreams, $writeStreams, $exceptStreams, 0, $sleepTime);
+        } catch (\ErrorException $e) {
+            if ($e->getCode() === 2) {
+                throw new StreamSelectError("Too many connections. stream_select() does not support file descriptors ids above 1023. Consider using another event loop implementation (for example from React)");
+
+                /**
+                 * Below is an attempt to implement a fallback stream_select() which scans through all
+                 * the streams. It seems fairly fast, but I couldn't find a way to safely detect if a stream
+                 * would block.
+                 *
+                 * Perhaps something can be done via pcntl_fork then pcntl_exec - since file descriptors will
+                 * survive such a fork.
+                 */
+                $readStreams = $oReadStreams;
+                $writeStreams = $oWriteStreams;
+                $t = microtime(true);
+                foreach ($readStreams as $streamId => $readStream) {
+                    $meta = stream_get_meta_data($readStream);
+                    $willBlock = true;
+                    if ($meta['unread_bytes'] > 0) {
+                        $willBlock = false;
+                    } elseif (!$meta['eof']) {
+                        $willBlock = false;
+                    }
+                    if ($willBlock) {
+                        unset($readStreams[$streamId]);
+                    } else {
+                        stream_set_blocking($readStream, false);
+                    }
+                }
+
+                foreach ($writeStreams as $streamId => $readStream) {
+                    $meta = stream_get_meta_data($readStream);
+                    $willBlock = true;
+                    if ($meta['unread_bytes'] === 0) {
+                        $willBlock = false;
+                    }
+                    if ($willBlock) {
+                        unset($writeStreams[$streamId]);
+                    } else {
+                        stream_set_blocking($readStream, false);
+                    }
+                }
+            } else {
+                throw $e;
+            }
+        }
 
         foreach ($readStreams as $stream) {
             $streamId = get_resource_id($stream);

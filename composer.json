@@ -3,7 +3,8 @@
     "description": "An event-loop compatability layer for creating packages that work with other event loop implementations such as ReactPHP or Amphp.",
     "type": "library",
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.0",
+        "charm/event": ">=0"
     },
     "suggest": {
         "ext-pcntl": "For signal handling support"

@@ -4,23 +4,103 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e2f711e7fb3e1572faf9f1cd46d3d477",
-    "packages": [],
-    "packages-dev": [
+    "content-hash": "8934c9873faa8f574a81ee075464cc57",
+    "packages": [
         {
-            "name": "charm/options",
-            "version": "1.0.5",
+            "name": "charm/error",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
-                "url": "https://bitbucket.org/ennerd/charm-options.git",
-                "reference": "7e67cea54370b22b015556f1b31b65b62ce92e89"
+                "url": "https://bitbucket.org/ennerd/charm-error.git",
+                "reference": "6beab61332a8ebdfc42dcec308f098e5d53f1575"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://bitbucket.org/ennerd/charm-options/get/7e67cea54370b22b015556f1b31b65b62ce92e89.zip",
-                "reference": "7e67cea54370b22b015556f1b31b65b62ce92e89",
+                "url": "https://bitbucket.org/ennerd/charm-error/get/6beab61332a8ebdfc42dcec308f098e5d53f1575.zip",
+                "reference": "6beab61332a8ebdfc42dcec308f098e5d53f1575",
                 "shasum": ""
             },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Charm\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Frode Borli",
+                    "email": "frode@ennerd.com"
+                }
+            ],
+            "description": "Just an interface, a trait and two exception classes. Ancestor of all charm/* exception classes.",
+            "homepage": "https://bitbucket.org/ennerd/charm-error",
+            "support": {
+                "source": "https://bitbucket.org/ennerd/charm-error/src/6beab61332a8ebdfc42dcec308f098e5d53f1575/?at=1.0.0"
+            },
+            "time": "2021-09-09T10:36:28+00:00"
+        },
+        {
+            "name": "charm/event",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://bitbucket.org/ennerd/charm-event.git",
+                "reference": "89f76564e777ab7d73d7ce5e4fe8a760db02c370"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://bitbucket.org/ennerd/charm-event/get/89f76564e777ab7d73d7ce5e4fe8a760db02c370.zip",
+                "reference": "89f76564e777ab7d73d7ce5e4fe8a760db02c370",
+                "shasum": ""
+            },
+            "require": {
+                "charm/error": "^1.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Frode Borli",
+                    "email": "frode@ennerd.com"
+                }
+            ],
+            "description": "A simple event emitter interface and a trait with the methods 'on', 'off' and 'emit'.",
+            "homepage": "https://bitbucket.org/ennerd/charm-event",
+            "support": {
+                "source": "https://bitbucket.org/ennerd/charm-event/src/89f76564e777ab7d73d7ce5e4fe8a760db02c370/?at=1.0.1"
+            },
+            "time": "2022-04-08T20:43:09+00:00"
+        }
+    ],
+    "packages-dev": [
+        {
+            "name": "charm/options",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://bitbucket.org/ennerd/charm-options.git",
+                "reference": "95dec5386148050cfd3de49a889b3b1c0e38ede1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://bitbucket.org/ennerd/charm-options/get/95dec5386148050cfd3de49a889b3b1c0e38ede1.zip",
+                "reference": "95dec5386148050cfd3de49a889b3b1c0e38ede1",
+                "shasum": ""
+            },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "files": [
@@ -43,28 +123,29 @@
             "description": "A generic class for storing options while enforcing option types.",
             "homepage": "https://bitbucket.org/ennerd/charm-options",
             "support": {
-                "source": "https://bitbucket.org/ennerd/charm-options/src/7e67cea54370b22b015556f1b31b65b62ce92e89/?at=1.0.5"
+                "source": "https://bitbucket.org/ennerd/charm-options/src/95dec5386148050cfd3de49a889b3b1c0e38ede1/?at=1.0.6"
             },
-            "time": "2022-01-08T17:17:09+00:00"
+            "time": "2022-04-07T09:59:49+00:00"
         },
         {
             "name": "charm/terminal",
-            "version": "1.0.6",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/ennerd/terminal.git",
-                "reference": "c150ac68b012e5b9e3f05379be3cce2b04f9c9c9"
+                "reference": "af5cc7df87365e954987e1b0b4f9c3478f64897f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://bitbucket.org/ennerd/terminal/get/c150ac68b012e5b9e3f05379be3cce2b04f9c9c9.zip",
-                "reference": "c150ac68b012e5b9e3f05379be3cce2b04f9c9c9",
+                "url": "https://bitbucket.org/ennerd/terminal/get/af5cc7df87365e954987e1b0b4f9c3478f64897f.zip",
+                "reference": "af5cc7df87365e954987e1b0b4f9c3478f64897f",
                 "shasum": ""
             },
             "require": {
-                "charm/options": "^1.0",
-                "charm/util-phpencode": "^1.0"
+                "charm/options": ">=1.0.6",
+                "charm/util-phpencode": ">=1.0.2"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "files": [
@@ -90,9 +171,9 @@
             "description": "Organized and colorful command line output through a simple markup language.",
             "homepage": "https://bitbucket.org/ennerd/terminal",
             "support": {
-                "source": "https://bitbucket.org/ennerd/terminal/src/c150ac68b012e5b9e3f05379be3cce2b04f9c9c9/?at=1.0.6"
+                "source": "https://bitbucket.org/ennerd/terminal/src/af5cc7df87365e954987e1b0b4f9c3478f64897f/?at=master"
             },
-            "time": "2022-04-01T11:14:40+00:00"
+            "time": "2022-04-08T20:40:39+00:00"
         },
         {
             "name": "charm/testing",
@@ -100,16 +181,16 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/ennerd/charm-testing.git",
-                "reference": "f434b69218f2a9d5d528abac93021cfe3f92882f"
+                "reference": "389cdbb3a0a997459605a24204a59423b5f006ee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://bitbucket.org/ennerd/charm-testing/get/f434b69218f2a9d5d528abac93021cfe3f92882f.zip",
-                "reference": "f434b69218f2a9d5d528abac93021cfe3f92882f",
+                "url": "https://bitbucket.org/ennerd/charm-testing/get/389cdbb3a0a997459605a24204a59423b5f006ee.zip",
+                "reference": "389cdbb3a0a997459605a24204a59423b5f006ee",
                 "shasum": ""
             },
             "require": {
-                "charm/terminal": "^1.0",
+                "charm/terminal": ">=1.0.6",
                 "charm/util-phpencode": "^1.0"
             },
             "default-branch": true,
@@ -135,9 +216,9 @@
             "description": "A tool for running regression and unit testing with very little scaffolding.",
             "homepage": "https://bitbucket.org/ennerd/charm-testing",
             "support": {
-                "source": "https://bitbucket.org/ennerd/charm-testing/src/f434b69218f2a9d5d528abac93021cfe3f92882f/?at=0.0.7"
+                "source": "https://bitbucket.org/ennerd/charm-testing/src/389cdbb3a0a997459605a24204a59423b5f006ee/?at=0.0.9"
             },
-            "time": "2022-04-04T21:36:27+00:00"
+            "time": "2022-04-08T20:41:52+00:00"
         },
         {
             "name": "charm/util-phpencode",

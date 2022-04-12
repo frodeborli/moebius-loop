@@ -1,24 +1,13 @@
 moebius/loop
 ============
 
-A powerful and simple event loop implementation which works on top of either
-`react/event-loop` or `amphp/amp`. If neither of those event loop implementations,
-are installed in your project, the built in event-loop will be used.
+A powerful and simple event loop implementation which can work together with 
+various other event loop implementations such as `react/event-loop` or 
+`amphp/amp`. If neither of those event loop implementations, are installed
+in your project, the built in event-loop will be used.
 
-The purpose of this package is to enable `moebius/coroutine` to be used in any
-existing async project.
-
-In other words, the goal is to enable writing your code in a truly sequential
-style:
-
-```
-$server = new HttpServer(function (ServerRequestInterface $request) {
-
-    sleep(20); // YES, this is non-blocking code(!)
-    return Response::plaintext("Hello World!\n");
-
-});
-```
+By using moebius/loop instead of directly integrating with React or Amp, your
+library can support both event loop implementations.
 
 
 Use case
