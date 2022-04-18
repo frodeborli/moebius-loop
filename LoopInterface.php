@@ -12,7 +12,7 @@ interface LoopInterface {
      * condition. The application should ideally stop by removing all
      * event listeners, timers and stream watchers.
      */
-    public function terminate(): void;
+    public function terminate(int $exitCode): void;
 
     /**
      * Runs the event loop until the $doneCallback returns true.

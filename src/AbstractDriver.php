@@ -17,7 +17,7 @@ abstract class AbstractDriver implements LoopInterface {
     abstract protected function _addReadListener($stream, callable $listener): callable;
     abstract protected function _addWriteListener($stream, callable $listener): callable;
     abstract protected function _addSignalListener(int $signal, callable $listener): callable;
-    abstract protected function terminate(int $exitCode): void;
+    abstract public function terminate(int $exitCode): void;
     abstract protected function _run(): void;
 
     public function __construct() {
@@ -129,7 +129,7 @@ abstract class AbstractDriver implements LoopInterface {
         if (!isset($this->signalListeners[$signalId]) || null === $this->signalListeners[$signalId]->get()) {
             $collection = new Callables();
             $this->signalListeners[$signalId] = WeakReference::create($collection);
-            $unsubscribe = $this->_addSignalListener($stream, $collection->invoke(...));
+            $unsubscribe = $this->_addSignalListener($signalId, $collection->invoke(...));
             $collection->setDestructor(function() use ($unsubscribe, $signalId) {
                 unset($this->signalListeners[$signalId]);
                 $unsubscribe();

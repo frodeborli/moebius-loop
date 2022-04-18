@@ -12,6 +12,10 @@ class ReactDriver extends AbstractDriver {
         register_shutdown_function(Loop::run(...));
     }
 
+    public function terminate(int $exitCode): void {
+        exit($exitCode);
+    }
+
     public function defer(callable $microtask): void {
         Loop::futureTick($microtask);
     }

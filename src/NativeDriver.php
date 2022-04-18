@@ -33,7 +33,7 @@ class NativeDriver implements LoopInterface {
      * condition. The application should ideally stop by removing all
      * event listeners, timers and stream watchers.
      */
-    public function terminate(): void {
+    public function terminate(int $exitCode): void {
         $this->terminating = true;
         foreach ($this->signalHandlers as $signo => $void) {
             pcntl_signal($signo, SIG_DFL);
@@ -188,11 +188,14 @@ class NativeDriver implements LoopInterface {
             return 0;
         }
 
-        $counter = 0;
+        $counter = $this->doStreamSelect();
+        if ($counter === 0) {
+            usleep(10000);
+        }
+
         $stopIndex = $this->queueHigh;
 
         $startTime = microtime(true);
-        $didStreamSelect = $this->isStreamSelectScheduled;
         while ($this->queueLow < $stopIndex) {
             $callback = $this->queue[$this->queueLow];
             unset($this->queue[$this->queueLow++]);
@@ -205,13 +208,7 @@ class NativeDriver implements LoopInterface {
                 $this->terminate();
             }
         }
-        if (!$didStreamSelect) {
-            $tickTime = intval(1000000 * (microtime(true) - $startTime));
-            if ($tickTime < 1000) {
-                $sleepTime = 1000 - $tickTime;
-                usleep($sleepTime);
-            }
-        }
+
         return $counter;
     }
 
@@ -273,13 +270,13 @@ echo "register_shutdown 1\n";
      * @param callable $callback        The callback to invoke
      */
     public function onReadable($stream, callable $callback): callable {
+
         $streamId = get_resource_id($stream);
         if (isset($this->readableStreamListeners[$streamId])) {
             $this->readableStreamListeners[$streamId][1][] = $callback;
         } else {
             $this->readableStreamListeners[$streamId] = [ $stream, [ $callback ] ];
         }
-        $this->enableStreamSelect();
         return function() use ($stream, $callback) {
             $this->removeReadableHandler($stream, $callback);
         };
@@ -319,7 +316,6 @@ echo "register_shutdown 1\n";
         } else {
             $this->writableStreamListeners[$streamId] = [ $stream, [ $callback ] ];
         }
-        $this->enableStreamSelect();
         return function() use ($stream, $callback) {
             $this->removeWritableHandler($stream, $callback);
         };
@@ -380,24 +376,11 @@ echo "register_shutdown 1\n";
         }
     }
 
-    private function enableStreamSelect(): void {
-        if (!$this->isStreamSelectScheduled) {
-            $this->isStreamSelectScheduled = true;
-            $this->defer($this->doStreamSelect(...));
-        }
-    }
-
     /**
      * Function which is scheduled to run in the event loop as long as there are
      * streams that need to be monitored for events.
      */
-    private function doStreamSelect(): void {
-        if (!$this->isStreamSelectScheduled) {
-            // The stream select is no longer scheduled so we abort
-            return;
-        }
-        $this->isStreamSelectScheduled = false;
-
+    private function doStreamSelect(): int {
         // holds any file descriptors with id < 1024
         $readStreams = [];
         $writeStreams = [];
@@ -429,16 +412,16 @@ echo "register_shutdown 1\n";
 
         if ($count === 0) {
             // there are no streams to monitor
-            return;
+            return 0;
         }
 
         if ($this->queueHigh - $this->queueLow === 0) {
             // nothing in the work queue, so there is no hurry
-            $sleepTime = 100000;
+            $sleepTime = 50000;
             $this->nextSleepTime = microtime(true) + 0.1;
         } elseif ($this->nextSleepTime < microtime(true)) {
             // scheduled sleep as safety measure against busy loops
-            $sleepTime = 50000;
+            $sleepTime = 10000;
             $this->nextSleepTime = microtime(true) + 0.05;
         } else {
             // have enough to do, so sleep minimally
@@ -449,6 +432,9 @@ echo "register_shutdown 1\n";
             $oReadStreams = $readStreams;
             $oWriteStreams = $writeStreams;
             $matches = stream_select($readStreams, $writeStreams, $exceptStreams, 0, $sleepTime);
+            if ($this->debug) {
+                echo " - stream_select readable=".count($readStreams)." write=".count($writeStreams)." except=".count($exceptStreams)."\n";
+            }
         } catch (\ErrorException $e) {
             if ($e->getCode() === 2) {
                 throw new StreamSelectError("Too many connections. stream_select() does not support file descriptors ids above 1023. Consider using another event loop implementation (for example from React)");
@@ -488,12 +474,16 @@ echo "register_shutdown 1\n";
                     if ($willBlock) {
                         unset($writeStreams[$streamId]);
                     } else {
-                        stream_set_blocking($readStream, false);
+                        stream_set_blocking($writeStream, false);
                     }
                 }
             } else {
                 throw $e;
             }
+        }
+
+        if ($exceptStreams !== []) {
+            echo "exception on ".count($exceptStreams)." streams\n";
         }
 
         foreach ($readStreams as $stream) {
@@ -509,15 +499,8 @@ echo "register_shutdown 1\n";
                 $this->defer($callback);
             }
         }
-
-        // re-enable stream select callback since we still have streams to monitor
-        $this->enableStreamSelect();
+        return $count;
     }
-
-    /**
-     * Do we currently have a stream_select() callback scheduled?
-     */
-    private bool $isStreamSelectScheduled = false;
 
     /**
      * Map of streams to callbacks that needs notification when the stream

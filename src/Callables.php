@@ -11,7 +11,9 @@ class Callables {
     private int $index = 0;
 
     public function __destruct() {
-        $this->destroy();
+        if (!$this->destroyed) {
+            $this->destroy();
+        }
     }
 
     public function setDestructor(callable $destructor): void {
@@ -20,7 +22,7 @@ class Callables {
 
     private function destroy(): void {
         if ($this->destroyed) {
-            throw new \Exception("Callables destroyed");
+            throw new \Exception("Callables already destroyed");
         }
         if ($this->destructor === null) {
             throw new \Exception("Destructor not configured");
@@ -32,15 +34,15 @@ class Callables {
         $destructor();
     }
 
-    public function invoke(): void {
+    public function invoke(mixed ...$args): void {
         if ($this->destroyed) {
             throw new \Exception("Callables destroyed");
         }
         foreach ($this->closures as $closure) {
             try {
-                $closure();
+                $closure(...$args);
             } catch (\Throwable $e) {
-                Moebius::logException($e);
+var_dump($e);die();
             }
         }
     }
@@ -55,7 +57,7 @@ class Callables {
         return function() use ($index) {
             unset($this->closures[$index]);
             if ($this->closures === []) {
-                $this->destruct();
+                $this->destroy();
             }
         };
     }
